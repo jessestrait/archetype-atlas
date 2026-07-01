@@ -456,7 +456,10 @@ async function exchangeCode(code) {
 // ─────────────────────────────────────────────
 async function spotifyGet(url, token) {
   const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
-  if (!res.ok) throw new Error('Spotify API error: ' + res.status);
+  if (!res.ok) {
+    const path = new URL(url).pathname;
+    throw new Error(`Spotify ${res.status} on ${path}`);
+  }
   return res.json();
 }
 

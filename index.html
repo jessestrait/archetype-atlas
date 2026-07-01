@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Archetype Atlas</title>
+  <style>
+    :root {
+      --bg: #0d0d14;
+      --surface: #16161f;
+      --border: #2a2a3a;
+      --text: #e8e8f0;
+      --muted: #888899;
+      --accent: #7b68ee;
+
+      /* Archetype palette */
+      --shadow:   #3a1a2e;
+      --healer:   #1a3a2a;
+      --trickster:#3a2a10;
+      --lover:    #3a1030;
+      --sage:     #1a2a3a;
+      --warrior:  #3a1a1a;
+      --puer:     #2a1a3a;
+      --explorer: #1a3030;
+
+      --shadow-hi:   #c06090;
+      --healer-hi:   #60c090;
+      --trickster-hi:#c09040;
+      --lover-hi:    #c04080;
+      --sage-hi:     #6090c0;
+      --warrior-hi:  #c06060;
+      --puer-hi:     #9060c0;
+      --explorer-hi: #40b0b0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Georgia', serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      padding: 2rem 2rem 1rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: 2rem;
+      letter-spacing: 0.12em;
+      font-weight: normal;
+      color: var(--text);
+    }
+
+    header p {
+      margin-top: 0.5rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-style: italic;
+    }
+
+    #connect-section {
+      margin: 3rem auto;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    #connect-section p {
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 2rem;
+      border-radius: 999px;
+      background: #1DB954;
+      color: #000;
+      font-size: 0.95rem;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      letter-spacing: 0.05em;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      font-weight: normal;
+      margin-left: 1rem;
+    }
+
+    #main { display: none; width: 100%; max-width: 1100px; padding: 2rem; }
+
+    /* ── Mandala ── */
+    #mandala-wrap {
+      position: relative;
+      width: 420px;
+      height: 420px;
+      margin: 0 auto 2.5rem;
+    }
+
+    #mandala {
+      width: 100%;
+      height: 100%;
+    }
+
+    .arc-slice {
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .arc-slice:hover { opacity: 0.85; }
+    .arc-slice.active { filter: brightness(1.3); }
+
+    #mandala-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      width: 120px;
+    }
+    #mandala-label .arch-name {
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      color: var(--text);
+    }
+    #mandala-label .arch-pct {
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: var(--accent);
+    }
+
+    /* ── Detail panel ── */
+    #detail {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      min-height: 120px;
+    }
+
+    #detail h2 {
+      font-size: 1.15rem;
+      font-weight: normal;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+    }
+
+    #detail .desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    #track-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.6rem;
+    }
+
+    .track-card {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.82rem;
+    }
+
+    .track-card img {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .track-card .track-info { overflow: hidden; }
+    .track-card .track-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+    }
+    .track-card .track-artist {
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Stats bar ── */
+    #stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-box .val {
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+    .stat-box .lbl {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Loading ── */
+    #loading {
+      display: none;
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      margin-top: auto;
+      padding: 2rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    footer a { color: var(--muted); }
+
+    @media (max-width: 600px) {
+      #stats { grid-template-columns: repeat(2, 1fr); }
+      #mandala-wrap { width: 300px; height: 300px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Archetype Atlas</h1>
+  <p>Your Spotify library mapped onto the Jungian psyche</p>
+</header>
+
+<!-- Connect screen -->
+<section id="connect-section">
+  <p>
+    Connect your Spotify account to analyze your Liked Songs and see
+    which Jungian archetypes live inside your music library.
+  </p>
+  <a class="btn" id="login-btn" href="#">Connect Spotify</a>
+  <button class="btn btn-ghost" id="demo-btn">Try demo data</button>
+</section>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Analyzing your library…</p>
+</div>
+
+<!-- Main view -->
+<div id="main">
+  <div id="stats">
+    <div class="stat-box"><div class="val" id="stat-tracks">—</div><div class="lbl">TRACKS ANALYZED</div></div>
+    <div class="stat-box"><div class="val" id="stat-dom">—</div><div class="lbl">DOMINANT ARCHETYPE</div></div>
+    <div class="stat-box"><div class="val" id="stat-genres">—</div><div class="lbl">GENRES</div></div>
+    <div class="stat-box"><div class="val" id="stat-valence">—</div><div class="lbl">AVG VALENCE</div></div>
+  </div>
+
+  <div id="mandala-wrap">
+    <svg id="mandala" viewBox="-210 -210 420 420" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="mandala-label">
+      <div class="arch-name" id="lbl-name">tap a slice</div>
+      <div class="arch-pct" id="lbl-pct"></div>
+    </div>
+  </div>
+
+  <div id="detail">
+    <h2 id="detail-title">Select an archetype</h2>
+    <p class="desc" id="detail-desc">Tap any segment of the mandala to explore the tracks that scored highest for that archetype.</p>
+    <div id="track-list"></div>
+  </div>
+</div>
+
+<footer>
+  Built by <a href="https://jessestrait.com">Jesse Strait</a> ·
+  Audio features via <a href="https://developer.spotify.com" target="_blank">Spotify Web API</a>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────
+//  CONFIG
+// ─────────────────────────────────────────────
+const CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID'; // replace before deploying
+const REDIRECT_URI = window.location.origin + window.location.pathname;
+const SCOPES = 'user-library-read';
+
+// ─────────────────────────────────────────────
+//  ARCHETYPES  (name, color, description, scoring weights)
+//
+//  Scoring formula per track:
+//    score = Σ (feature_value * weight)
+//  Features: valence [0-1], energy [0-1], mode [0=minor,1=major],
+//            tempo_norm [0-1, clamped 60-200 BPM],
+//            instrumentalness [0-1], acousticness [0-1]
+// ─────────────────────────────────────────────
+const ARCHETYPES = [
+  {
+    id: 'shadow',
+    name: 'Shadow',
+    color: '#c06090',
+    bg: '#3a1a2e',
+    desc: 'The repressed and unconscious self. Dark, brooding, emotionally complex music that confronts what we usually keep hidden.',
+    weights: { valence: -0.4, energy: 0.15, mode: -0.3, tempo_norm: 0.05, instrumentalness: 0.2, acousticness: -0.1 }
+  },
+  {
+    id: 'healer',
+    name: 'Wounded Healer',
+    color: '#60c090',
+    bg: '#1a3a2a',
+    desc: 'Transformation through pain. Vulnerable, acoustic, introspective tracks that hold sorrow and resilience simultaneously.',
+    weights: { valence: -0.2, energy: -0.25, mode: -0.1, tempo_norm: -0.15, instrumentalness: 0.1, acousticness: 0.4 }
+  },
+  {
+    id: 'trickster',
+    name: 'Trickster',
+    color: '#c09040',
+    bg: '#3a2a10',
+    desc: 'The rule-breaker and shapeshifter. Syncopated, genre-bending, unpredictable music that refuses to be categorized.',
+    weights: { valence: 0.2, energy: 0.25, mode: 0.05, tempo_norm: 0.3, instrumentalness: 0.1, acousticness: -0.15 }
+  },
+  {
+    id: 'lover',
+    name: 'Lover / Anima',
+    color: '#c04080',
+    bg: '#3a1030',
+    desc: 'Connection, longing, and beauty. High-valence or deeply felt tracks centered on intimacy, romance, and emotional warmth.',
+    weights: { valence: 0.4, energy: 0.1, mode: 0.25, tempo_norm: -0.1, instrumentalness: -0.1, acousticness: 0.2 }
+  },
+  {
+    id: 'sage',
+    name: 'Sage',
+    color: '#6090c0',
+    bg: '#1a2a3a',
+    desc: 'Clarity and contemplation. Ambient, instrumental, or lyrically dense tracks that invite reflection and sustained attention.',
+    weights: { valence: 0.05, energy: -0.2, mode: 0.1, tempo_norm: -0.2, instrumentalness: 0.45, acousticness: 0.15 }
+  },
+  {
+    id: 'warrior',
+    name: 'Warrior',
+    color: '#c06060',
+    bg: '#3a1a1a',
+    desc: 'Drive, discipline, and intensity. High-energy, fast-tempo tracks that propel forward motion and focused aggression.',
+    weights: { valence: 0.1, energy: 0.45, mode: 0.1, tempo_norm: 0.35, instrumentalness: -0.05, acousticness: -0.2 }
+  },
+  {
+    id: 'puer',
+    name: 'Puer Aeternus',
+    color: '#9060c0',
+    bg: '#2a1a3a',
+    desc: 'The eternal child — wonder, idealism, and escape. Dreamy, ethereal, or euphoric music that floats free of gravity.',
+    weights: { valence: 0.3, energy: 0.1, mode: 0.2, tempo_norm: -0.05, instrumentalness: 0.25, acousticness: 0.1 }
+  },
+  {
+    id: 'explorer',
+    name: 'Explorer',
+    color: '#40b0b0',
+    bg: '#1a3030',
+    desc: 'Restlessness and discovery. Tracks with global or eclectic influences, mid-energy, that evoke travel and the unfamiliar.',
+    weights: { valence: 0.15, energy: 0.2, mode: 0.05, tempo_norm: 0.15, instrumentalness: 0.2, acousticness: 0.25 }
+  }
+];
+
+// ─────────────────────────────────────────────
+//  PKCE AUTH HELPERS
+// ─────────────────────────────────────────────
+function b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function generateCodeVerifier() {
+  const arr = crypto.getRandomValues(new Uint8Array(64));
+  return b64url(arr);
+}
+
+async function generateCodeChallenge(verifier) {
+  const enc = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', enc);
+  return b64url(digest);
+}
+
+async function redirectToSpotify() {
+  const verifier = await generateCodeVerifier();
+  const challenge = await generateCodeChallenge(verifier);
+  sessionStorage.setItem('pkce_verifier', verifier);
+
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: REDIRECT_URI,
+    scope: SCOPES,
+    code_challenge_method: 'S256',
+    code_challenge: challenge,
+  });
+  window.location = 'https://accounts.spotify.com/authorize?' + params;
+}
+
+async function exchangeCode(code) {
+  const verifier = sessionStorage.getItem('pkce_verifier');
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: REDIRECT_URI,
+      client_id: CLIENT_ID,
+      code_verifier: verifier,
+    })
+  });
+  if (!res.ok) throw new Error('Token exchange failed');
+  return res.json();
+}
+
+// ─────────────────────────────────────────────
+//  SPOTIFY API
+// ─────────────────────────────────────────────
+async function spotifyGet(url, token) {
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+  if (!res.ok) throw new Error('Spotify API error: ' + res.status);
+  return res.json();
+}
+
+async function fetchAllLikedSongs(token) {
+  let tracks = [], url = 'https://api.spotify.com/v1/me/tracks?limit=50';
+  while (url) {
+    const data = await spotifyGet(url, token);
+    tracks.push(...data.items.map(i => i.track));
+    url = data.next;
+    if (tracks.length >= 500) break; // cap at 500 for perf
+  }
+  return tracks;
+}
+
+async function fetchAudioFeatures(ids, token) {
+  const chunks = [];
+  for (let i = 0; i < ids.length; i += 100)
+    chunks.push(ids.slice(i, i + 100));
+  const results = [];
+  for (const chunk of chunks) {
+    const data = await spotifyGet(
+      'https://api.spotify.com/v1/audio-features?ids=' + chunk.join(','), token
+    );
+    results.push(...(data.audio_features || []));
+  }
+  return results;
+}
+
+// ─────────────────────────────────────────────
+//  SCORING
+// ─────────────────────────────────────────────
+function scoreTrack(features) {
+  if (!features) return ARCHETYPES.map(() => 0);
+  const f = {
+    valence:          features.valence          ?? 0.5,
+    energy:           features.energy           ?? 0.5,
+    mode:             features.mode             ?? 0.5,
+    tempo_norm:       Math.min(Math.max((features.tempo - 60) / 140, 0), 1),
+    instrumentalness: features.instrumentalness ?? 0,
+    acousticness:     features.acousticness     ?? 0,
+  };
+  return ARCHETYPES.map(arch => {
+    let s = 0;
+    for (const [k, w] of Object.entries(arch.weights)) s += f[k] * w;
+    return s;
+  });
+}
+
+function normalizeScores(rawScores) {
+  // Per-archetype: collect all track scores, min-max normalize to [0,1]
+  const n = ARCHETYPES.length;
+  const mins = Array(n).fill(Infinity);
+  const maxs = Array(n).fill(-Infinity);
+  for (const row of rawScores) {
+    row.forEach((v, i) => { if (v < mins[i]) mins[i] = v; if (v > maxs[i]) maxs[i] = v; });
+  }
+  return rawScores.map(row =>
+    row.map((v, i) => maxs[i] === mins[i] ? 0.5 : (v - mins[i]) / (maxs[i] - mins[i]))
+  );
+}
+
+function buildArchetypeData(tracks, features, normalizedScores) {
+  return ARCHETYPES.map((arch, ai) => {
+    const scored = tracks
+      .map((t, ti) => ({ track: t, score: normalizedScores[ti][ai] }))
+      .sort((a, b) => b.score - a.score);
+    const avgScore = scored.reduce((s, x) => s + x.score, 0) / scored.length;
+    return { arch, avgScore, topTracks: scored.slice(0, 12) };
+  });
+}
+
+// ─────────────────────────────────────────────
+//  MANDALA (SVG)
+// ─────────────────────────────────────────────
+function polarToXY(angle, r) {
+  return [r * Math.cos(angle), r * Math.sin(angle)];
+}
+
+function arcPath(startAngle, endAngle, r1, r2) {
+  const [x1, y1] = polarToXY(startAngle, r1);
+  const [x2, y2] = polarToXY(startAngle, r2);
+  const [x3, y3] = polarToXY(endAngle, r2);
+  const [x4, y4] = polarToXY(endAngle, r1);
+  const large = endAngle - startAngle > Math.PI ? 1 : 0;
+  return `M${x1},${y1} L${x2},${y2} A${r2},${r2} 0 ${large},1 ${x3},${y3} L${x4},${y4} A${r1},${r1} 0 ${large},0 ${x1},${y1}Z`;
+}
+
+function drawMandala(archetypeData) {
+  const svg = document.getElementById('mandala');
+  svg.innerHTML = '';
+  const n = archetypeData.length;
+  const slice = (2 * Math.PI) / n;
+  const offset = -Math.PI / 2;
+  const maxR = 195, minR = 60;
+
+  archetypeData.forEach(({ arch, avgScore }, i) => {
+    const start = offset + i * slice + 0.02;
+    const end = offset + (i + 1) * slice - 0.02;
+    const r = minR + avgScore * (maxR - minR);
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', arcPath(start, end, minR, r));
+    path.setAttribute('fill', arch.bg);
+    path.setAttribute('stroke', arch.color);
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('class', 'arc-slice');
+    path.setAttribute('data-idx', i);
+
+    path.addEventListener('click', () => selectArchetype(i, archetypeData));
+    svg.appendChild(path);
+
+    // Label
+    const mid = (start + end) / 2;
+    const lr = minR + avgScore * (maxR - minR) / 2 + 10;
+    const [lx, ly] = polarToXY(mid, lr + 20);
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', lx);
+    text.setAttribute('y', ly);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'middle');
+    text.setAttribute('fill', arch.color);
+    text.setAttribute('font-size', '11');
+    text.setAttribute('font-family', 'Georgia, serif');
+    text.setAttribute('pointer-events', 'none');
+    text.textContent = arch.name;
+    svg.appendChild(text);
+  });
+
+  // Center circle
+  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  circle.setAttribute('cx', 0); circle.setAttribute('cy', 0);
+  circle.setAttribute('r', minR - 2);
+  circle.setAttribute('fill', '#0d0d14');
+  circle.setAttribute('stroke', '#2a2a3a');
+  circle.setAttribute('stroke-width', '1');
+  svg.appendChild(circle);
+}
+
+// ─────────────────────────────────────────────
+//  UI
+// ─────────────────────────────────────────────
+let _archetypeData = [];
+
+function selectArchetype(idx, archetypeData) {
+  const { arch, avgScore, topTracks } = archetypeData[idx];
+
+  document.querySelectorAll('.arc-slice').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll(`.arc-slice[data-idx="${idx}"]`).forEach(el => el.classList.add('active'));
+
+  document.getElementById('lbl-name').textContent = arch.name;
+  document.getElementById('lbl-pct').textContent = Math.round(avgScore * 100) + '%';
+  document.getElementById('detail-title').textContent = arch.name;
+  document.getElementById('detail-desc').textContent = arch.desc;
+
+  const list = document.getElementById('track-list');
+  list.innerHTML = '';
+  topTracks.forEach(({ track }) => {
+    const img = track.album?.images?.[2]?.url || '';
+    const card = document.createElement('div');
+    card.className = 'track-card';
+    card.innerHTML = `
+      ${img ? `<img src="${img}" alt="" loading="lazy">` : ''}
+      <div class="track-info">
+        <div class="track-name">${track.name}</div>
+        <div class="track-artist">${track.artists?.map(a => a.name).join(', ') || ''}</div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function showMain(archetypeData) {
+  _archetypeData = archetypeData;
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  document.getElementById('connect-section').style.display = 'none';
+
+  const dominant = archetypeData.reduce((a, b) => a.avgScore > b.avgScore ? a : b);
+  const totalTracks = archetypeData[0].topTracks.length > 0
+    ? archetypeData.reduce((s, a) => Math.max(s, a.topTracks.length), 0)
+    : 0;
+
+  // Stats (approximate — we don't persist track count through scoring)
+  document.getElementById('stat-dom').textContent = dominant.arch.name;
+
+  drawMandala(archetypeData);
+  selectArchetype(archetypeData.indexOf(dominant), archetypeData);
+}
+
+// ─────────────────────────────────────────────
+//  DEMO DATA
+// ─────────────────────────────────────────────
+function loadDemo() {
+  const demoTracks = Array.from({ length: 80 }, (_, i) => ({
+    name: `Track ${i + 1}`,
+    artists: [{ name: `Artist ${(i % 12) + 1}` }],
+    album: { images: [] },
+    id: String(i)
+  }));
+
+  // Synthetic features spanning the archetype space
+  const profiles = [
+    { valence:0.1, energy:0.4, mode:0, tempo:80,  instrumentalness:0.3, acousticness:0.2 },  // shadow
+    { valence:0.3, energy:0.2, mode:0, tempo:70,  instrumentalness:0.1, acousticness:0.7 },  // healer
+    { valence:0.7, energy:0.8, mode:1, tempo:150, instrumentalness:0.1, acousticness:0.05 }, // trickster
+    { valence:0.8, energy:0.5, mode:1, tempo:100, instrumentalness:0.05,acousticness:0.3 },  // lover
+    { valence:0.4, energy:0.2, mode:1, tempo:75,  instrumentalness:0.7, acousticness:0.2 },  // sage
+    { valence:0.5, energy:0.9, mode:1, tempo:170, instrumentalness:0.05,acousticness:0.05 }, // warrior
+    { valence:0.75,energy:0.4, mode:1, tempo:90,  instrumentalness:0.4, acousticness:0.2 },  // puer
+    { valence:0.55,energy:0.6, mode:1, tempo:110, instrumentalness:0.3, acousticness:0.35 }, // explorer
+  ];
+
+  const features = demoTracks.map((_, i) => ({
+    ...profiles[i % profiles.length],
+    id: String(i)
+  }));
+
+  const rawScores = features.map(f => scoreTrack(f));
+  const normalized = normalizeScores(rawScores);
+  const archetypeData = buildArchetypeData(demoTracks, features, normalized);
+
+  document.getElementById('stat-tracks').textContent = demoTracks.length;
+  document.getElementById('stat-genres').textContent = '—';
+  document.getElementById('stat-valence').textContent = (
+    features.reduce((s, f) => s + f.valence, 0) / features.length
+  ).toFixed(2);
+
+  showMain(archetypeData);
+}
+
+// ─────────────────────────────────────────────
+//  MAIN FLOW
+// ─────────────────────────────────────────────
+async function runWithToken(token) {
+  document.getElementById('connect-section').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+
+  try {
+    const tracks = await fetchAllLikedSongs(token);
+    const ids = tracks.map(t => t.id).filter(Boolean);
+    const features = await fetchAudioFeatures(ids, token);
+
+    const rawScores = features.map(f => scoreTrack(f));
+    const normalized = normalizeScores(rawScores);
+    const archetypeData = buildArchetypeData(tracks, features, normalized);
+
+    const avgValence = features.reduce((s, f) => s + (f?.valence ?? 0), 0) / features.length;
+    document.getElementById('stat-tracks').textContent = tracks.length;
+    document.getElementById('stat-genres').textContent = '—';
+    document.getElementById('stat-valence').textContent = avgValence.toFixed(2);
+
+    showMain(archetypeData);
+  } catch (e) {
+    document.getElementById('loading').innerHTML =
+      `<p style="color:#c06060">Error: ${e.message}</p>`;
+  }
+}
+
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+
+  if (code) {
+    // Clean URL
+    history.replaceState({}, '', window.location.pathname);
+    try {
+      const { access_token } = await exchangeCode(code);
+      sessionStorage.setItem('spotify_token', access_token);
+      await runWithToken(access_token);
+    } catch (e) {
+      document.getElementById('connect-section').style.display = 'block';
+      alert('Auth failed: ' + e.message);
+    }
+    return;
+  }
+
+  const token = sessionStorage.getItem('spotify_token');
+  if (token) {
+    await runWithToken(token);
+    return;
+  }
+
+  // Show connect screen
+  document.getElementById('connect-section').style.display = 'block';
+  document.getElementById('login-btn').addEventListener('click', e => {
+    e.preventDefault();
+    if (CLIENT_ID === 'YOUR_SPOTIFY_CLIENT_ID') {
+      alert('Set your Spotify CLIENT_ID in index.html before connecting.');
+      return;
+    }
+    redirectToSpotify();
+  });
+  document.getElementById('demo-btn').addEventListener('click', loadDemo);
+}
+
+init();
+</script>
+</body>
+</html>

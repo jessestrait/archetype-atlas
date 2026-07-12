@@ -14,10 +14,16 @@ recomputed from llm_archetypes.json.
 """
 import json
 import re
+import time
+import urllib.error
+import urllib.request
+import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 
 SRC = "llm_archetypes.json"
 OUT = "data_output.json"
 TOP_N = 35
+OEMBED_URL = "https://open.spotify.com/oembed"
 
 # key, name, glyph, color (matches index.html's ARCHETYPES.color / CSS --*-hi vars),
 # blurb (copied verbatim from ARCHETYPES.desc), and the primary-label variants
@@ -60,6 +66,33 @@ for a in ARCHETYPES:
     for v in a["variants"]:
         VARIANT_TO_KEY[normalize(v)] = a["key"]
 
+def fetch_thumbnail(uri, retries=4):
+    if not uri:
+        return None
+    url = OEMBED_URL + "?" + urllib.parse.urlencode({"url": uri})
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    for attempt in range(retries):
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+                return data.get("thumbnail_url")
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                time.sleep(2 ** attempt)
+                continue
+            return None
+        except Exception:
+            time.sleep(1)
+    return None
+
+def fetch_thumbnails(uris):
+    unique = [u for u in dict.fromkeys(uris) if u]
+    results = {}
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        for uri, thumb in zip(unique, pool.map(fetch_thumbnail, unique)):
+            results[uri] = thumb
+    return results
+
 def main():
     with open(SRC) as f:
         tracks = json.load(f)
@@ -77,15 +110,25 @@ def main():
             continue
         buckets[key].append(t)
 
+    tops = {}
+    for a in ARCHETYPES:
+        bucket = buckets[a["key"]]
+        tops[a["key"]] = sorted(bucket, key=lambda t: t.get("confidence", 0), reverse=True)[:TOP_N]
+
+    all_top_uris = [t.get("uri") for top in tops.values() for t in top]
+    print(f"Fetching album thumbnails for {len(set(all_top_uris))} tracks...")
+    thumbnails = fetch_thumbnails(all_top_uris)
+
     archetypes_out = []
     for a in ARCHETYPES:
         bucket = buckets[a["key"]]
         count = len(bucket)
         pct = round(count / total * 100, 1) if total else 0
-        top = sorted(bucket, key=lambda t: t.get("confidence", 0), reverse=True)[:TOP_N]
+        top = tops[a["key"]]
         tracks_out = [
             {"n": t.get("track", ""), "a": t.get("artist", ""),
-             "s": t.get("confidence", 0), "r": t.get("reason", "")}
+             "s": t.get("confidence", 0), "r": t.get("reason", ""),
+             "img": thumbnails.get(t.get("uri")) or ""}
             for t in top
         ]
         archetypes_out.append({
@@ -99,10 +142,13 @@ def main():
     with open(OUT, "w") as f:
         json.dump(data, f, indent=2)
 
+    missing_thumbs = sum(1 for a in archetypes_out for t in a["tracks"] if not t["img"])
+
     print(f"Total tracks: {total}\n")
     print(f"{'Archetype':<18} {'count':>6} {'pct':>7}")
     for a in archetypes_out:
         print(f"{a['name']:<18} {a['count']:>6} {a['pct']:>6}%")
+    print(f"\nMissing thumbnails: {missing_thumbs} / {sum(len(a['tracks']) for a in archetypes_out)}")
 
     if flagged:
         print(f"\n{len(flagged)} track(s) with unrecognized primary archetype:")

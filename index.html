@@ -201,6 +201,29 @@
       letter-spacing: 0.05em;
     }
 
+    /* ── About / methodology ── */
+    #about {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+    }
+    #about h2 {
+      font-size: 1.15rem;
+      font-weight: normal;
+      letter-spacing: 0.06em;
+      margin-bottom: 1rem;
+    }
+    #about p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      margin-bottom: 0.9rem;
+    }
+    #about p:last-child { margin-bottom: 0; }
+    #about strong { color: var(--text); font-weight: 600; }
+
     footer {
       margin-top: auto;
       padding: 2rem;
@@ -244,6 +267,33 @@
     <h2 id="detail-title">Select an archetype</h2>
     <p class="desc" id="detail-desc">Tap any segment of the mandala to explore the tracks that scored highest for that archetype.</p>
     <div id="track-list"></div>
+  </div>
+
+  <div id="about">
+    <h2>How This Works</h2>
+    <p>
+      This is my actual Spotify library — <strong>1,071 liked songs</strong> — sorted
+      into eight Jungian archetypes (Shadow, Wounded Healer, Trickster, Lover/Anima,
+      Sage, Warrior, Puer Aeternus, Explorer) by <strong>Claude</strong>, Anthropic's
+      LLM. Nothing here is keyword-matching or a lookup table — every track was
+      read and judged individually.
+    </p>
+    <p>
+      For each track, Claude was given the artist, title, genre tags, and Spotify's
+      audio features (valence, energy, mode, tempo, danceability, acousticness,
+      instrumentalness) — plus whatever it already knows about the artist, the
+      lyrics, and the track's cultural context. From that it assigned a
+      <strong>primary archetype</strong>, an optional <strong>secondary archetype</strong>
+      when a track was a genuine blend, and a one-sentence rationale grounded in
+      that specific track rather than a generic genre description.
+    </p>
+    <p>
+      The number you'll see if you hover a track card is its <strong>confidence
+      score (0–100)</strong> — how strongly Claude believes that track embodies the
+      archetype, not a measure of quality, popularity, or Spotify's own metrics.
+      The reasoning behind every score is right there in the tooltip, so nothing
+      here is a black box.
+    </p>
   </div>
 </div>
 
@@ -347,7 +397,7 @@ function selectArchetype(idx) {
   arch.tracks.forEach(t => {
     const card = document.createElement('div');
     card.className = 'track-card';
-    card.title = t.r;
+    card.title = `${t.s}% confidence — ${t.r}`;
 
     const img = document.createElement('img');
     img.src = t.img || '';

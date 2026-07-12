@@ -143,13 +143,24 @@
 
     .track-card {
       display: flex;
-      align-items: center;
-      gap: 0.75rem;
+      flex-direction: column;
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 0.5rem 0.75rem;
       font-size: 0.82rem;
+      cursor: pointer;
+    }
+    .track-card:hover { border-color: var(--muted); }
+    .track-card.expanded {
+      grid-column: 1 / -1;
+      border-color: var(--accent);
+    }
+
+    .track-card .track-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
     }
 
     .track-card img {
@@ -161,7 +172,7 @@
       background: var(--surface);
     }
 
-    .track-card .track-info { overflow: hidden; }
+    .track-card .track-info { overflow: hidden; flex: 1; }
     .track-card .track-name {
       white-space: nowrap;
       overflow: hidden;
@@ -173,6 +184,36 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .track-card .expand-icon {
+      flex-shrink: 0;
+      color: var(--muted);
+      font-size: 0.7rem;
+      transition: transform 0.2s;
+    }
+    .track-card.expanded .expand-icon {
+      transform: rotate(180deg);
+      color: var(--accent);
+    }
+
+    .track-reason {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+    .track-card.expanded .track-reason { max-height: 200px; }
+    .track-reason-inner {
+      margin-top: 0.6rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .track-reason-inner .score-line {
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 0.3rem;
     }
 
     /* ── Stats bar ── */
@@ -396,7 +437,12 @@ function selectArchetype(idx) {
   arch.tracks.forEach(t => {
     const card = document.createElement('div');
     card.className = 'track-card';
-    card.title = `${t.s}% confidence — ${t.r}`;
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-expanded', 'false');
+
+    const row = document.createElement('div');
+    row.className = 'track-row';
 
     const img = document.createElement('img');
     img.src = t.img || '';
@@ -413,7 +459,42 @@ function selectArchetype(idx) {
     artist.textContent = t.a;
     info.append(name, artist);
 
-    card.append(img, info);
+    const expandIcon = document.createElement('span');
+    expandIcon.className = 'expand-icon';
+    expandIcon.textContent = '▾';
+
+    row.append(img, info, expandIcon);
+
+    const reason = document.createElement('div');
+    reason.className = 'track-reason';
+    const reasonInner = document.createElement('div');
+    reasonInner.className = 'track-reason-inner';
+    const scoreLine = document.createElement('div');
+    scoreLine.className = 'score-line';
+    scoreLine.textContent = `${t.s}% confidence`;
+    const reasonText = document.createElement('div');
+    reasonText.textContent = t.r;
+    reasonInner.append(scoreLine, reasonText);
+    reason.appendChild(reasonInner);
+
+    card.append(row, reason);
+
+    const toggle = () => {
+      const willExpand = !card.classList.contains('expanded');
+      list.querySelectorAll('.track-card.expanded').forEach(el => {
+        el.classList.remove('expanded');
+        el.setAttribute('aria-expanded', 'false');
+      });
+      if (willExpand) {
+        card.classList.add('expanded');
+        card.setAttribute('aria-expanded', 'true');
+      }
+    };
+    card.addEventListener('click', toggle);
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+
     list.appendChild(card);
   });
 }

@@ -103,26 +103,6 @@
       transition: opacity 0.2s;
     }
 
-    #mandala-label {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      pointer-events: none;
-      width: 120px;
-    }
-    #mandala-label .arch-name {
-      font-size: 1.1rem;
-      letter-spacing: 0.08em;
-      color: var(--text);
-    }
-    #mandala-label .arch-pct {
-      font-size: 2.1rem;
-      font-weight: bold;
-      color: var(--accent);
-    }
-
     /* ── Detail panel ── */
     #detail {
       background: var(--surface);
@@ -319,10 +299,6 @@
   <div id="mandala-wrap">
     <svg id="mandala" viewBox="-210 -210 420 420" xmlns="http://www.w3.org/2000/svg"></svg>
     <div id="mandala-emblem"></div>
-    <div id="mandala-label">
-      <div class="arch-name" id="lbl-name">tap a slice</div>
-      <div class="arch-pct" id="lbl-pct"></div>
-    </div>
   </div>
 
   <div id="detail">
@@ -547,8 +523,6 @@ function selectArchetype(idx) {
   document.querySelectorAll('.arc-slice').forEach(el => el.classList.remove('active'));
   document.querySelectorAll(`.arc-slice[data-idx="${idx}"]`).forEach(el => el.classList.add('active'));
 
-  document.getElementById('lbl-name').textContent = arch.name;
-  document.getElementById('lbl-pct').textContent = arch.pct + '%';
   document.getElementById('mandala-emblem').innerHTML = emblemSVG(arch.glyph, arch.color, 108);
   document.getElementById('detail-title').innerHTML = `${emblemSVG(arch.glyph, arch.color)}<span>${arch.name}</span>`;
   document.getElementById('detail-desc').textContent = arch.blurb;
